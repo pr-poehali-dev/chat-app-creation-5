@@ -4,6 +4,7 @@ import SecurityPanel from "@/components/SecurityPanel";
 import ProfilePanel from "@/components/ProfilePanel";
 import NotificationsPanel from "@/components/NotificationsPanel";
 import SettingsPanel from "@/components/SettingsPanel";
+import PremiumPanel from "@/components/PremiumPanel";
 
 const CONTACTS = [
   { id: 1, name: "Алина Морозова", avatar: "А", status: "online", lastMsg: "Окей, договорились!", time: "14:32", unread: 2, encrypted: true },
@@ -35,13 +36,14 @@ const MESSAGES: Record<number, { id: number; text: string; out: boolean; time: s
 };
 
 const NAV_ITEMS = [
-  { id: "chats", icon: "MessageCircle", label: "Чаты" },
-  { id: "contacts", icon: "Users", label: "Контакты" },
-  { id: "search", icon: "Search", label: "Поиск" },
-  { id: "notifications", icon: "Bell", label: "Уведомления" },
-  { id: "security", icon: "ShieldCheck", label: "Безопасность" },
-  { id: "settings", icon: "Settings", label: "Настройки" },
-  { id: "profile", icon: "User", label: "Профиль" },
+  { id: "chats",         icon: "MessageCircle", label: "Чаты" },
+  { id: "contacts",      icon: "Users",         label: "Контакты" },
+  { id: "search",        icon: "Search",        label: "Поиск" },
+  { id: "notifications", icon: "Bell",          label: "Уведомления" },
+  { id: "security",      icon: "ShieldCheck",   label: "Безопасность" },
+  { id: "premium",       icon: "Crown",         label: "Premium" },
+  { id: "settings",      icon: "Settings",      label: "Настройки" },
+  { id: "profile",       icon: "User",          label: "Профиль" },
 ];
 
 const statusColor: Record<string, string> = {
@@ -65,12 +67,13 @@ interface IndexProps {
   onLogout?: () => void;
 }
 
-export default function Index({ user, isPremium, onLogout }: IndexProps) {
+export default function Index({ user, isPremium: initialPremium, onLogout }: IndexProps) {
   const [activeNav, setActiveNav] = useState("chats");
   const [activeChat, setActiveChat] = useState<number | null>(1);
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState(MESSAGES);
   const [search, setSearch] = useState("");
+  const [isPremium, setIsPremium] = useState(initialPremium);
 
   const activeContact = CONTACTS.find((c) => c.id === activeChat);
   const chatMessages = activeChat ? (messages[activeChat] || []) : [];
@@ -109,14 +112,21 @@ export default function Index({ user, isPremium, onLogout }: IndexProps) {
             onClick={() => setActiveNav(item.id)}
             title={item.label}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group relative
-              ${activeNav === item.id
-                ? "active-nav text-violet-400"
-                : "text-white/30 hover:text-white/70 hover:bg-white/5"
+              ${item.id === "premium"
+                ? activeNav === "premium"
+                  ? "bg-gradient-to-br from-amber-400/30 to-orange-500/20 text-amber-300 border border-amber-500/40"
+                  : "text-amber-400/60 hover:text-amber-400 hover:bg-amber-500/10"
+                : activeNav === item.id
+                  ? "active-nav text-violet-400"
+                  : "text-white/30 hover:text-white/70 hover:bg-white/5"
               }`}
           >
             <Icon name={item.icon} fallback="Circle" size={18} />
             {item.id === "notifications" && (
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-pink-500 rounded-full pulse-dot" />
+            )}
+            {item.id === "premium" && !isPremium && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
             )}
           </button>
         ))}
@@ -202,6 +212,8 @@ export default function Index({ user, isPremium, onLogout }: IndexProps) {
         <NotificationsPanel />
       ) : activeNav === "settings" ? (
         <SettingsPanel isPremium={isPremium} />
+      ) : activeNav === "premium" ? (
+        <PremiumPanel isPremium={isPremium} onActivated={() => { setIsPremium(true); setActiveNav("chats"); }} />
       ) : activeContact ? (
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
