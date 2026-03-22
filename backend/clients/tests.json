@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "GET all clients",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"clients": [], "total": 0},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST create client",
+      "method": "POST",
+      "path": "/",
+      "body": {"name": "Тест Клиент", "phone": "+79001234567", "email": "test@example.com", "company": "ООО Тест", "status": "active", "source": "website"},
+      "expectedStatus": 201,
+      "expectedBody": {"name": "Тест Клиент"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET search clients",
+      "method": "GET",
+      "path": "/?search=Тест",
+      "expectedStatus": 200,
+      "expectedBody": {"total": 1},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
