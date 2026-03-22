@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Icon from "@/components/ui/icon";
 
 const AUTH_URL = "https://functions.poehali.dev/3b8b4e86-99bb-44fb-8a3d-f78f5859ee58";
@@ -39,6 +39,7 @@ export default function ProfilePanel({ user, isPremium, onLogout, onUserUpdate }
     username: String(user?.username || ""),
     email: String(user?.email || ""),
     bio: "",
+    current_password: "",
     new_password: "",
     confirm_password: "",
   });
@@ -53,12 +54,30 @@ export default function ProfilePanel({ user, isPremium, onLogout, onUserUpdate }
     }
     setError(""); setSaving(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
-      const updated = { ...user, display_name: form.display_name, username: form.username, email: form.email };
+      const body: Record<string, string> = {};
+      if (form.display_name) body.display_name = form.display_name;
+      if (form.email !== String(user?.email || "")) body.email = form.email;
+      if (form.new_password) {
+        body.new_password = form.new_password;
+        body.current_password = form.current_password;
+      }
+
+      const res = await fetch(`${AUTH_URL}/?action=update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Auth-Token": token || "" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Ошибка сервера");
+
+      const updated = { ...user, ...data.user };
       localStorage.setItem("volna_user", JSON.stringify(updated));
       onUserUpdate?.(updated);
+      setForm((f) => ({ ...f, current_password: "", new_password: "", confirm_password: "" }));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Ошибка соединения");
     } finally {
       setSaving(false);
     }
@@ -194,8 +213,9 @@ export default function ProfilePanel({ user, isPremium, onLogout, onUserUpdate }
                 <p className="text-xs font-semibold text-white/50 mb-3 uppercase tracking-wide">Смена пароля</p>
                 <div className="flex flex-col gap-2.5">
                   {[
+                    { key: "current_password", label: "Текущий пароль" },
                     { key: "new_password",     label: "Новый пароль" },
-                    { key: "confirm_password", label: "Повторите пароль" },
+                    { key: "confirm_password", label: "Повторите новый пароль" },
                   ].map((f) => (
                     <div key={f.key} className="relative">
                       <Icon name="Lock" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" />

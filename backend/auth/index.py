@@ -303,6 +303,60 @@ def handler(event: dict, context) -> dict:
             )
             return ok({"sessions": [dict(r) for r in cur.fetchall()]})
 
+        # POST /update — обновление профиля и/или пароля
+        if method == "POST" and action == "update":
+            if not token:
+                return err("Требуется авторизация", 401)
+            user = get_user_from_token(cur, token)
+            if not user:
+                return err("Сессия недействительна", 401)
+
+            body = json.loads(event.get("body") or "{}")
+            updates = []
+            args = []
+
+            display_name = (body.get("display_name") or "").strip()
+            if display_name:
+                updates.append("display_name = %s")
+                args.append(display_name)
+
+            email = (body.get("email") or "").strip().lower()
+            if email and email != user["email"]:
+                if not validate_email(email):
+                    return err("Некорректный email")
+                cur.execute(f"SELECT id FROM {SCHEMA}.users WHERE email = %s AND id != %s", (email, user["id"]))
+                if cur.fetchone():
+                    return err("Этот email уже используется", 409)
+                updates.append("email = %s")
+                args.append(email)
+
+            new_password = body.get("new_password") or ""
+            if new_password:
+                current_password = body.get("current_password") or ""
+                if not current_password:
+                    return err("Введите текущий пароль для его смены")
+                if not verify_password(current_password, user["password_hash"]):
+                    return err("Текущий пароль неверен", 401)
+                pw_err = validate_password(new_password)
+                if pw_err:
+                    return err(pw_err)
+                updates.append("password_hash = %s")
+                args.append(hash_password(new_password))
+
+            if not updates:
+                return err("Нет данных для обновления")
+
+            updates.append("updated_at = NOW()")
+            args.append(user["id"])
+            cur.execute(
+                f"UPDATE {SCHEMA}.users SET {', '.join(updates)} WHERE id = %s RETURNING id, username, email, display_name, avatar_url, two_factor_enabled",
+                args
+            )
+            updated = cur.fetchone()
+            log_security_event(cur, user["id"], "profile_updated", ip, device, details={"fields": [u.split(" =")[0] for u in updates[:-1]]})
+            conn.commit()
+            return ok({"user": dict(updated), "success": True})
+
         return err("Маршрут не найден", 404)
 
     finally:

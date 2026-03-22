@@ -5,8 +5,8 @@
       "method": "POST",
       "path": "/?action=register",
       "body": {
-        "username": "volna_test_a1",
-        "email": "volnatest_a1@example.com",
+        "username": "volna_test_b2",
+        "email": "volnatest_b2@example.com",
         "password": "SecurePass1!",
         "display_name": "Тест Пользователь"
       },
@@ -19,7 +19,7 @@
       "method": "POST",
       "path": "/?action=login",
       "body": {
-        "login": "volna_test_a1",
+        "login": "volna_test_b2",
         "password": "SecurePass1!"
       },
       "expectedStatus": 200,
@@ -44,11 +44,20 @@
       "method": "POST",
       "path": "/?action=login",
       "body": {
-        "login": "volna_test_a1",
+        "login": "volna_test_b2",
         "password": "WrongPass!"
       },
       "expectedStatus": 401,
       "expectedBody": {"error": "Неверный логин или пароль"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Update without token rejected",
+      "method": "POST",
+      "path": "/?action=update",
+      "body": {"display_name": "Новое имя"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Требуется авторизация"},
       "bodyMatcher": "partial"
     }
   ]
