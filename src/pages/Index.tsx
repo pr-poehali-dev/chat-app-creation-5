@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import SecurityPanel from "@/components/SecurityPanel";
 import ProfilePanel from "@/components/ProfilePanel";
@@ -47,6 +47,13 @@ const NAV_ITEMS = [
   { id: "profile",       icon: "User",          label: "Профиль" },
 ];
 
+const EMOJI_GROUPS = [
+  { label: "😊 Смайлы", emojis: ["😀","😂","🥹","😍","🥰","😎","🤩","😏","🤔","😴","🥳","😭","😡","🤯","🫡","😇","🤗","😅","😬","🙈"] },
+  { label: "👋 Жесты", emojis: ["👍","👎","👏","🙌","🤝","🫶","❤️","🔥","💯","✨","⭐","🎉","🎊","🎁","🚀","💪","🫂","🤙","☝️","✌️"] },
+  { label: "🌿 Природа", emojis: ["🌸","🌺","🌻","🍀","🌈","☀️","🌙","⚡","🌊","🦋","🐶","🐱","🦊","🐼","🐨","🦁","🐸","🌴","🍁","❄️"] },
+  { label: "🍕 Еда", emojis: ["🍕","🍔","🍣","🍜","🍦","🧁","🍰","☕","🍵","🧃","🥂","🍺","🍷","🥑","🍓","🍇","🍒","🌮","🥗","🍩"] },
+];
+
 const statusColor: Record<string, string> = {
   online: "bg-emerald-400",
   offline: "bg-gray-500",
@@ -75,14 +82,59 @@ export default function Index({ user, isPremium: initialPremium, onLogout }: Ind
   const [messages, setMessages] = useState(MESSAGES);
   const [search, setSearch] = useState("");
   const [isPremium, setIsPremium] = useState(initialPremium);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [dynamicChats, setDynamicChats] = useState<typeof CONTACTS>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
 
-  const activeContact = CONTACTS.find((c) => c.id === activeChat);
+  const allContacts = [...CONTACTS, ...dynamicChats];
+  const activeContact = allContacts.find((c) => c.id === activeChat);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmoji(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
   const chatMessages = activeChat ? (messages[activeChat] || []) : [];
 
-  const filteredContacts = CONTACTS.filter((c) =>
+  const filteredContacts = allContacts.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.lastMsg.toLowerCase().includes(search.toLowerCase())
   );
+
+  const [emojiGroup, setEmojiGroup] = useState(0);
+
+  const insertEmoji = (emoji: string) => {
+    const input = inputRef.current;
+    if (!input) { setInputText((t) => t + emoji); return; }
+    const start = input.selectionStart ?? inputText.length;
+    const end = input.selectionEnd ?? inputText.length;
+    const newText = inputText.slice(0, start) + emoji + inputText.slice(end);
+    setInputText(newText);
+    setTimeout(() => { input.focus(); input.setSelectionRange(start + emoji.length, start + emoji.length); }, 0);
+  };
+
+  const startChatWithContact = (name: string) => {
+    const existing = allContacts.find((c) => c.name === name);
+    if (existing) {
+      setActiveChat(existing.id);
+      setActiveNav("chats");
+      return;
+    }
+    const newId = Date.now();
+    const newChat = {
+      id: newId, name, avatar: name[0]?.toUpperCase() || "?",
+      status: "online" as const, lastMsg: "Начните диалог...", time: "Сейчас", unread: 0, encrypted: true,
+    };
+    setDynamicChats((prev) => [...prev, newChat]);
+    setMessages((prev) => ({ ...prev, [newId]: [] }));
+    setActiveChat(newId);
+    setActiveNav("chats");
+  };
 
   const sendMessage = () => {
     if (!inputText.trim() || !activeChat) return;
@@ -214,7 +266,7 @@ export default function Index({ user, isPremium: initialPremium, onLogout }: Ind
       ) : activeNav === "settings" ? (
         <SettingsPanel isPremium={isPremium} />
       ) : activeNav === "contacts" ? (
-        <ContactsPanel />
+        <ContactsPanel onStartChat={startChatWithContact} />
       ) : activeNav === "premium" ? (
         <PremiumPanel isPremium={isPremium} onActivated={() => { setIsPremium(true); setActiveNav("chats"); }} />
       ) : activeContact ? (
@@ -267,15 +319,43 @@ export default function Index({ user, isPremium: initialPremium, onLogout }: Ind
           </div>
 
           {/* Input */}
-          <div className="px-4 py-3 border-t border-white/5 glass-strong">
+          <div className="px-4 py-3 border-t border-white/5 glass-strong relative">
+            {/* Emoji picker */}
+            {showEmoji && (
+              <div ref={emojiRef} className="absolute bottom-full left-4 mb-2 glass-strong rounded-2xl p-3 w-72 shadow-2xl z-50 animate-fade-in border border-white/10">
+                {/* Group tabs */}
+                <div className="flex gap-1 mb-2 overflow-x-auto">
+                  {EMOJI_GROUPS.map((g, i) => (
+                    <button key={i} onClick={() => setEmojiGroup(i)}
+                      className={`flex-shrink-0 text-xs px-2 py-1 rounded-lg transition-colors ${emojiGroup === i ? "bg-violet-500/30 text-violet-300" : "text-white/30 hover:text-white/60"}`}
+                    >
+                      {g.label.split(" ")[0]}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-10 gap-0.5">
+                  {EMOJI_GROUPS[emojiGroup].emojis.map((emoji) => (
+                    <button key={emoji} onClick={() => insertEmoji(emoji)}
+                      className="w-7 h-7 flex items-center justify-center text-lg hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-2xl px-3 py-2 focus-within:border-violet-500/40 transition-colors">
-              <button className="text-white/25 hover:text-white/60 transition-colors flex-shrink-0">
+              <button
+                onClick={() => setShowEmoji((v) => !v)}
+                className={`transition-colors flex-shrink-0 ${showEmoji ? "text-violet-400" : "text-white/25 hover:text-white/60"}`}
+              >
                 <Icon name="Smile" size={18} />
               </button>
               <input
+                ref={inputRef}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { sendMessage(); setShowEmoji(false); } }}
                 placeholder="Сообщение..."
                 className="flex-1 bg-transparent text-sm text-white/80 placeholder-white/25 outline-none"
               />

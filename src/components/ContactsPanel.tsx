@@ -37,7 +37,11 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 
 const SOURCES = ["Все", "website", "referral", "social", "ads", "other"];
 
-export default function ContactsPanel() {
+interface ContactsPanelProps {
+  onStartChat?: (name: string) => void;
+}
+
+export default function ContactsPanel({ onStartChat }: ContactsPanelProps) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -269,8 +273,13 @@ export default function ContactsPanel() {
               <Icon name="ArrowLeft" size={16} />
             </button>
             <h3 className="font-semibold text-white text-sm flex-1 truncate">{selected.name}</h3>
-            <button className="w-7 h-7 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/6 flex items-center justify-center transition-colors">
-              <Icon name="MessageCircle" size={15} />
+            <button
+              onClick={() => onStartChat?.(selected.name)}
+              title="Написать сообщение"
+              className="flex items-center gap-1.5 text-xs bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 px-2.5 py-1.5 rounded-xl transition-colors"
+            >
+              <Icon name="MessageCircle" size={13} />
+              Написать
             </button>
           </div>
 
