@@ -3,6 +3,7 @@ import Icon from "@/components/ui/icon";
 import SecurityPanel from "@/components/SecurityPanel";
 import ProfilePanel from "@/components/ProfilePanel";
 import NotificationsPanel from "@/components/NotificationsPanel";
+import SettingsPanel from "@/components/SettingsPanel";
 
 const CONTACTS = [
   { id: 1, name: "Алина Морозова", avatar: "А", status: "online", lastMsg: "Окей, договорились!", time: "14:32", unread: 2, encrypted: true },
@@ -199,6 +200,8 @@ export default function Index({ user, isPremium, onLogout }: IndexProps) {
         <ProfilePanel user={user} isPremium={isPremium} onLogout={onLogout} />
       ) : activeNav === "notifications" ? (
         <NotificationsPanel />
+      ) : activeNav === "settings" ? (
+        <SettingsPanel isPremium={isPremium} />
       ) : activeContact ? (
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
