@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import SecurityPanel from "@/components/SecurityPanel";
+import ProfilePanel from "@/components/ProfilePanel";
 
 const CONTACTS = [
   { id: 1, name: "Алина Морозова", avatar: "А", status: "online", lastMsg: "Окей, договорились!", time: "14:32", unread: 2, encrypted: true },
@@ -193,6 +194,8 @@ export default function Index({ user, isPremium, onLogout }: IndexProps) {
       {/* Chat area */}
       {activeNav === "security" ? (
         <SecurityPanel isPremium={isPremium} onUpgrade={() => setActiveNav("settings")} />
+      ) : activeNav === "profile" ? (
+        <ProfilePanel user={user} isPremium={isPremium} onLogout={onLogout} />
       ) : activeContact ? (
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
