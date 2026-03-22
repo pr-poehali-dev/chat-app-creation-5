@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import SecurityPanel from "@/components/SecurityPanel";
 
 const CONTACTS = [
   { id: 1, name: "Алина Морозова", avatar: "А", status: "online", lastMsg: "Окей, договорились!", time: "14:32", unread: 2, encrypted: true },
@@ -190,7 +191,9 @@ export default function Index({ user, isPremium, onLogout }: IndexProps) {
       </div>
 
       {/* Chat area */}
-      {activeContact ? (
+      {activeNav === "security" ? (
+        <SecurityPanel isPremium={isPremium} onUpgrade={() => setActiveNav("settings")} />
+      ) : activeContact ? (
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/5 glass-strong">
