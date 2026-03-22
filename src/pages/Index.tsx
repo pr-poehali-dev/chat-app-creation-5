@@ -5,6 +5,7 @@ import ProfilePanel from "@/components/ProfilePanel";
 import NotificationsPanel from "@/components/NotificationsPanel";
 import SettingsPanel from "@/components/SettingsPanel";
 import PremiumPanel from "@/components/PremiumPanel";
+import ContactsPanel from "@/components/ContactsPanel";
 
 const CONTACTS = [
   { id: 1, name: "Алина Морозова", avatar: "А", status: "online", lastMsg: "Окей, договорились!", time: "14:32", unread: 2, encrypted: true },
@@ -212,6 +213,8 @@ export default function Index({ user, isPremium: initialPremium, onLogout }: Ind
         <NotificationsPanel />
       ) : activeNav === "settings" ? (
         <SettingsPanel isPremium={isPremium} />
+      ) : activeNav === "contacts" ? (
+        <ContactsPanel />
       ) : activeNav === "premium" ? (
         <PremiumPanel isPremium={isPremium} onActivated={() => { setIsPremium(true); setActiveNav("chats"); }} />
       ) : activeContact ? (
