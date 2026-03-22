@@ -55,7 +55,13 @@ const avatarGradients = [
   "from-indigo-500 to-blue-600",
 ];
 
-export default function Index() {
+interface IndexProps {
+  user?: Record<string, unknown> | null;
+  isPremium?: boolean;
+  onLogout?: () => void;
+}
+
+export default function Index({ user, isPremium, onLogout }: IndexProps) {
   const [activeNav, setActiveNav] = useState("chats");
   const [activeChat, setActiveChat] = useState<number | null>(1);
   const [inputText, setInputText] = useState("");
@@ -110,10 +116,19 @@ export default function Index() {
             )}
           </button>
         ))}
-        <div className="mt-auto">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-            Я
-          </div>
+        <div className="mt-auto flex flex-col items-center gap-2">
+          {isPremium && (
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center" title="Premium">
+              <Icon name="Crown" size={12} className="text-white" />
+            </div>
+          )}
+          <button
+            onClick={onLogout}
+            title="Выйти"
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold hover:scale-105 transition-transform"
+          >
+            {user ? String(user.display_name || user.username || "Я")[0].toUpperCase() : "Я"}
+          </button>
         </div>
       </div>
 

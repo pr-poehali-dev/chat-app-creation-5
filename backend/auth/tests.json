@@ -1,0 +1,55 @@
+{
+  "tests": [
+    {
+      "name": "Register new user",
+      "method": "POST",
+      "path": "/?action=register",
+      "body": {
+        "username": "volna_test_a1",
+        "email": "volnatest_a1@example.com",
+        "password": "SecurePass1!",
+        "display_name": "Тест Пользователь"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {"is_premium": false},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login user",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {
+        "login": "volna_test_a1",
+        "password": "SecurePass1!"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"is_premium": false},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Weak password rejected",
+      "method": "POST",
+      "path": "/?action=register",
+      "body": {
+        "username": "weakuser99",
+        "email": "weak99@example.com",
+        "password": "123"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {"error": "Пароль должен быть не менее 8 символов"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Wrong password rejected",
+      "method": "POST",
+      "path": "/?action=login",
+      "body": {
+        "login": "volna_test_a1",
+        "password": "WrongPass!"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Неверный логин или пароль"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
